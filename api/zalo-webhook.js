@@ -4,7 +4,7 @@ const { google } = require('googleapis');
 // Tải credentials từ biến môi trường
 const credentials = JSON.parse(process.env.GOOGLE_SHEET_CREDENTIALS || '{}');
 // Sheet ID của bạn - PHẢI THAY THẾ GIÁ TRỊ NÀY HOẶC ĐỂ LẬP TRÌNH VIÊN THAY SAU
-const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID_HERE';
+const SHEET_ID = '1FbzQ_RbLAIwjLfdItPzia9f5DKEgKH78uVrk4F3bahE';
 
 module.exports = async (req, res) => {
     // 1. Chỉ xử lý yêu cầu POST
