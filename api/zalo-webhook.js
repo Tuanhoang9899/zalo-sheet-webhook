@@ -42,7 +42,7 @@ module.exports = async (req, res) => {
             // Ghi vào Google Sheet
             await sheets.spreadsheets.values.append({
                 spreadsheetId: SHEET_ID,
-                range: 'Sheet1!A:E', // THAY 'Sheet1' BẰNG TÊN SHEET CỦA BẠN NẾU KHÁC
+                range: 'SHEET1', // THAY 'Sheet1' BẰNG TÊN SHEET CỦA BẠN NẾU KHÁC
                 valueInputOption: 'USER_ENTERED',
                 resource: {
                     values: [rowData],
