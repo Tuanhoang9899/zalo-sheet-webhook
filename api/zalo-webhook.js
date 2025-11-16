@@ -7,6 +7,8 @@ const credentials = JSON.parse(process.env.GOOGLE_SHEET_CREDENTIALS || '{}');
 const SHEET_ID = '1FbzQ_RbLAIwjLfdItPzia9f5DKEgKH78uVrk4F3bahE';
 
 module.exports = async (req, res) => {
+    // Thêm dòng này để kiểm tra xem request có tới được đây không
+    console.log('Webhook received:', req.method);
     // 1. Chỉ xử lý yêu cầu POST
     if (req.method !== 'POST') {
         return res.status(200).send('Webhook server is running.');
