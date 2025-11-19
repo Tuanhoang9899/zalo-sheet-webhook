@@ -1,14 +1,11 @@
 {
   "name": "zalo-sheet-webhook",
   "version": "1.0.0",
-  "description": "Zalo Webhook receiver for Google Sheets API via Vercel Serverless Function",
-  "main": "api/zalo-webhook.js",
-  "scripts": {
-    "start": "node api/zalo-webhook.js"
-  },
+  "description": "Zalo Webhook receiver for Google Sheets via Vercel Serverless Function",
+  "private": true,
+  "license": "MIT",
   "dependencies": {
     "axios": "^1.13.2",
-    "body-parser": "^1.20.2",
     "googleapis": "^80.0.0"
   }
 }
