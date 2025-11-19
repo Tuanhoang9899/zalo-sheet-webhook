@@ -1,80 +1,68 @@
-// File: /api/zalo-webhook.js
+// /api/zalo-webhook.js
 const { google } = require("googleapis");
 
 module.exports = async (req, res) => {
     console.log("Webhook received:", req.method);
 
-    // Zalo always sends POST
     if (req.method !== "POST") {
-        return res.status(200).send("Webhook OK");
+        return res.status(200).send("Webhook server is running.");
     }
 
     try {
-        // =======================
-        // 1. Parse RAW BODY (Vercel bắt buộc)
-        // =======================
+        // ====== PARSE RAW JSON BODY (bắt buộc trên Vercel) ======
         let rawBody = "";
         await new Promise(resolve => {
             req.on("data", chunk => (rawBody += chunk));
             req.on("end", resolve);
         });
 
-        const data = JSON.parse(rawBody || "{}");
+        const data = JSON.parse(rawBody);
         console.log("Parsed data:", data);
 
-        // =======================
-        // 2. Lấy event và follower
-    =======================
-        const event = data.event_name || "";
-        const followerId = data.follower?.id || "";
-        const displayName = data.follower?.name || "";
-        const refCode = data.ref_code || "";   // Nếu OA hỗ trợ -> Zalo sẽ gửi
-        const source = data.source || "";
+        const event = data.event_name;
 
-        // =======================
-        // 3. Ghi vào Google Sheet
-        // =======================
-        const credentials = JSON.parse(process.env.GOOGLE_SHEET_CREDENTIALS || "{}");
+        // ====== ONLY HANDLE FOLLOW EVENT ======
+        if (event === "follow") {
 
-        const auth = new google.auth.GoogleAuth({
-            credentials: {
-                client_email: credentials.client_email,
-                private_key: credentials.private_key?.replace(/\\n/g, "\n")
-            },
-            scopes: ["https://www.googleapis.com/auth/spreadsheets"]
-        });
+            // Load Google credentials
+            const credentials = JSON.parse(process.env.GOOGLE_SHEET_CREDENTIALS);
 
-        const sheets = google.sheets({ version: "v4", auth });
+            const auth = new google.auth.GoogleAuth({
+                credentials: {
+                    client_email: credentials.client_email,
+                    private_key: credentials.private_key.replace(/\\n/g, "\n")
+                },
+                scopes: ["https://www.googleapis.com/auth/spreadsheets"]
+            });
 
-        const SHEET_ID = "1FbzQ_RbLAIwjLfdItPzia9f5DKEgKH78uVrk4F3bahE";
+            const sheets = google.sheets({ version: "v4", auth });
 
-        // Chuẩn bị dòng ghi
-        const row = [
-            new Date().toLocaleString("vi-VN"),  // Timestamp
-            event,
-            followerId,
-            displayName,
-            source,
-            refCode || "(không có)",             // Luôn ghi rõ ràng
-        ];
+            // ====== Ghi vào Sheet ======
+            const SHEET_ID = "1FbzQ_RbLAIwjLfdItPzia9f5DKEgKH78uVrk4F3bahE";
 
-        await sheets.spreadsheets.values.append({
-            spreadsheetId: SHEET_ID,
-            range: "Sheet2!A:F",
-            valueInputOption: "USER_ENTERED",
-            resource: { values: [row] }
-        });
+            const row = [
+                new Date().toLocaleString("vi-VN"),
+                data.follower?.id || "",
+                data.user_id_by_app || "",
+                data.ref_code || data.invited_code || "", // <<< SỬA CHỖ NÀY
+                "Follow OA"
+            ];
 
-        console.log("Saved to sheet:", row);
+            await sheets.spreadsheets.values.append({
+                spreadsheetId: SHEET_ID,
+                range: "Sheet2!A:E",
+                valueInputOption: "USER_ENTERED",
+                resource: { values: [row] }
+            });
 
-        return res.status(200).json({
-            error: 0,
-            message: "Webhook saved successfully",
-            received_ref: refCode || null
-        });
+            return res.status(200).json({ error: 0, message: "Saved follow event" });
+        }
+
+        // ignore other events
+        return res.status(200).json({ error: 0, message: "Event ignored" });
 
     } catch (err) {
         console.error("Webhook error:", err);
-        return res.status(500).json({ error: 1, message: "Server error", detail: err.toString() });
+        return res.status(500).json({ error: 1, message: "Webhook error" });
     }
 };
