@@ -2,9 +2,9 @@
 const { google } = require("googleapis");
 const axios = require("axios"); // Cần cài đặt bằng npm install axios
 
-// Khai báo hằng số (Lấy từ Biến Môi trường Vercel)
+// Khai báo hằng số
 const SHEET_ID = "1FbzQ_RbLAIwjLfdItPzia9f5DKEgKH78uVrk4F3bahE"; // ID Sheet của bạn
-const ZALO_APP_ID = process.env.ZALO_APP_ID; // App ID của ketnolzal123111 (195007030042636289)
+const ZALO_APP_ID = process.env.ZALO_APP_ID;
 const ZALO_APP_SECRET = process.env.ZALO_APP_SECRET;
 
 // Hàm lấy Official Account Access Token
@@ -36,7 +36,6 @@ async function getZaloProfile(accessToken, userId) {
         const profileResponse = await axios.get(
             `https://openapi.zalo.me/v2.0/oa/getprofile?access_token=${accessToken}&user_id=${userId}`
         );
-        // Trả về trường 'data' chứa profile
         return profileResponse.data.data;
     } catch (error) {
         console.error("Error getting Zalo Profile:", error.message);
@@ -58,34 +57,31 @@ module.exports = async (req, res) => {
         });
         const data = JSON.parse(rawBody);
         const event = data.event_name;
-        console.log("Parsed data:", data);
 
-        // Chỉ xử lý sự kiện FOLLOW (Vì event follow là lúc cần lấy ref code)
+        // Chỉ xử lý sự kiện FOLLOW
         if (event !== "follow") {
-            // Log cho thấy Webhook chỉ gửi event follow nên ta chỉ cần xử lý cái này
             return res.status(200).json({ error: 0, message: "Event ignored" });
         }
 
-        const followerId = data.follower?.id; // ID của người follow
+        const followerId = data.follower?.id;
 
         if (!followerId) {
             return res.status(200).json({ error: 0, message: "Missing follower ID" });
         }
 
-        // --- BƯỚC 1: LẤY ACCESS TOKEN ---
+        // --- BƯỚC 1 & 2: GỌI ZALO API LẤY PROFILE ---
         const accessToken = await getAccessToken();
         if (!accessToken) {
+            // Nếu không lấy được Token, ghi lỗi 500 để dễ debug
             return res.status(500).json({ error: 1, message: "Failed to get Zalo Access Token" });
         }
 
-        // --- BƯỚC 2: GỌI API LẤY PROFILE ---
         const profileData = await getZaloProfile(accessToken, followerId);
 
         let refCode = "";
         let displayName = "";
 
         if (profileData) {
-            // Lấy Mã Đại lý và Tên hiển thị từ API
             refCode = profileData.ref_code || "";
             displayName = profileData.display_name || "";
         }
@@ -101,20 +97,20 @@ module.exports = async (req, res) => {
         });
         const sheets = google.sheets({ version: "v4", auth });
 
-        // Tạo dòng dữ liệu để ghi vào Sheet
+        // Tạo mảng dữ liệu (row) với 6 cột A đến F
         const row = [
             new Date().toLocaleString("vi-VN"),
-            followerId, // User ID (Cột B)
-            displayName, // Tên hiển thị (Cột C)
-            refCode, // Mã đại lý (Cột D)
-            "Follow OA", // Event (Cột E)
-            profileData ? "Completed (API)" : "API Error" // Cột Status (Cột F)
+            followerId,
+            displayName,
+            refCode,
+            "Follow OA",
+            profileData ? "Completed (API)" : "API Error"
         ];
 
         await sheets.spreadsheets.values.append({
             spreadsheetId: SHEET_ID,
-            // Phạm vi A:F để bao gồm cột Status mới
-            range: "Sheet2!A:F6",
+            // Sử dụng Sheet2!A:F theo cấu trúc sheet mới
+            range: "Sheet2!A:F",
             valueInputOption: "USER_ENTERED",
             resource: { values: [row] }
         });
