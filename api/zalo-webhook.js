@@ -44,7 +44,8 @@ module.exports = async (req, res) => {
                 new Date().toLocaleString("vi-VN"),
                 data.follower?.id || "",
                 data.user_id_by_app || "",
-                data.ref_code || data.invited_code || "", // <<< SỬA CHỖ NÀY
+                // data.ref_code || data.invited_code || "", // <<< SỬA CHỖ NÀY
+                data.tracking_id || "",
                 "Follow OA"
             ];
 
