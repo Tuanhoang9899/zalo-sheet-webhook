@@ -114,7 +114,7 @@ module.exports = async (req, res) => {
         await sheets.spreadsheets.values.append({
             spreadsheetId: SHEET_ID,
             // Phạm vi A:F để bao gồm cột Status mới
-            range: "Sheet2!A:F",
+            range: "Sheet2!A:F6",
             valueInputOption: "USER_ENTERED",
             resource: { values: [row] }
         });
